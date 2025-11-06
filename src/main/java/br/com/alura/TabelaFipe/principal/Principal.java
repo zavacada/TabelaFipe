@@ -2,11 +2,15 @@ package br.com.alura.TabelaFipe.principal;
 
 import br.com.alura.TabelaFipe.model.Dados;
 import br.com.alura.TabelaFipe.model.Modelos;
+import br.com.alura.TabelaFipe.model.Veiculos;
 import br.com.alura.TabelaFipe.service.ConsumoApi;
 import br.com.alura.TabelaFipe.service.ConverteDados;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
     private Scanner leitura = new Scanner(System.in);
@@ -53,10 +57,42 @@ public class Principal {
         json = consumo.obterDados(endereco);
         var modeloLista = conversor.obterDados(json, Modelos.class);
 
+
         System.out.println("\nModelos dessa marca:");
         modeloLista.modelos().stream()
                 .sorted(Comparator.comparing(Dados::codigo))
                 .forEach(System.out::println);
 
+        System.out.println("\nDigite uma parte do nome do carro para ser buscado:");
+        var nomeVeiculo = leitura.nextLine();
+
+        List<Dados> modelosFiltrados = modeloLista.modelos().stream()
+                .filter(m -> m.nome().toLowerCase().contains(nomeVeiculo.toLowerCase()))
+                .collect(Collectors.toList());
+
+        System.out.println("\nModelos filtrados");
+        modelosFiltrados.forEach(System.out::println);
+
+        System.out.println("Digite por favor o código do modelo para buscar os valores de avaliação");
+        var codigoModelo = leitura.nextLine();
+
+        endereco = endereco + "/" + codigoModelo + "/anos";
+        json = consumo.obterDados(endereco);
+        List<Dados> anos = conversor.obterlista(json, Dados.class);
+
+        List<Veiculos> veiculos = new ArrayList<>();
+
+        for (int i = 0; i < anos.size(); i++) {
+            var enderecoAnos = endereco + "/" + anos.get(i).codigo();
+            json = consumo.obterDados(enderecoAnos);
+            Veiculos veiculo = conversor.obterDados(json, Veiculos.class);
+            veiculos.add(veiculo);
+        }
+
+
+        System.out.println("\nTodos os veiculos filtrados com avaliações por ano: "); veiculos.forEach(System.out::println);
+
     }
+
 }
+
